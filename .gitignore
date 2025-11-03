@@ -1,0 +1,27 @@
+# Dependencias de Python
+venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+
+# Salida de FastAPI
+/backend/app/.env
+
+# Dependencias de Node
+node_modules/
+/frontend/node_modules/
+
+# Archivos de compilación
+dist/
+build/
+*.log
+*.sqlite3
+
+# Entornos y configuraciones locales
+.env
+.env.local
+.DS_Store
+*.pyc
+*.pyo
+*.pyd
+*~
