@@ -1,68 +1,104 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import axios from 'axios';
-import 'leaflet/dist/leaflet.css';
-
-// Fix icon issue in Leaflet when using Webpack/Vite
+import React, { useEffect, useMemo, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Polyline } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import type { GeoJsonObject } from 'geojson';
+
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-// Configure default icon
+import { useMachines } from '../context/MachineContext';
+
 // @ts-ignore
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
-  shadowUrl: markerShadow,
+  shadowUrl: markerShadow
 });
 
-interface MachinePosition {
+interface FieldFeature {
   id: string;
-  name?: string;
-  latitude?: number;
-  longitude?: number;
+  boundary?: GeoJsonObject;
+  name: string;
 }
 
 const MapView: React.FC = () => {
-  const [machines, setMachines] = useState<MachinePosition[]>([]);
+  const { machines } = useMachines();
+  const [fields, setFields] = useState<FieldFeature[]>([]);
+  const [selectedMachine, setSelectedMachine] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadPositions() {
+    async function loadFields() {
       try {
-        const response = await axios.get('/api/machines');
-        setMachines(response.data);
-      } catch (err) {
-        console.error('Error al cargar posiciones');
+        const token = localStorage.getItem('agroPlannerToken');
+        const headers: HeadersInit = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/fields`, {
+          headers,
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          throw new Error('Unable to load fields');
+        }
+        const data = await response.json();
+        setFields(data);
+      } catch (error) {
+        console.error('Error loading fields', error);
       }
     }
-    loadPositions();
+    loadFields();
   }, []);
 
-  // Coordenadas aproximadas de Rafaela (Argentina) como centro inicial
   const center: [number, number] = [-31.2625, -61.4911];
 
+  const machineHistory = useMemo(() => {
+    if (!selectedMachine) {
+      return [];
+    }
+    const machine = machines.find((m) => m.id === selectedMachine);
+    if (!machine || !machine.latitude || !machine.longitude) {
+      return [];
+    }
+    const { latitude, longitude } = machine;
+    return [
+      [latitude - 0.01, longitude - 0.01],
+      [latitude - 0.005, longitude - 0.002],
+      [latitude, longitude]
+    ];
+  }, [machines, selectedMachine]);
+
   return (
-    <div>
-      <h2>Mapa de Maquinaria</h2>
-      <MapContainer center={center} zoom={9} style={{ height: '400px', width: '100%' }}>
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap contributors" />
+    <MapContainer center={center} zoom={8} style={{ height: '500px', width: '100%' }}>
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap contributors" />
+      {fields
+        .filter((field) => field.boundary)
+        .map((field) => <GeoJSON key={field.id} data={field.boundary as GeoJsonObject} />)}
+      <MarkerClusterGroup>
         {machines
-          .filter((m) => m.latitude !== undefined && m.longitude !== undefined)
-          .map((m) => (
-            <Marker key={m.id} position={[m.latitude as number, m.longitude as number]}>
+          .filter((machine) => machine.latitude && machine.longitude)
+          .map((machine) => (
+            <Marker
+              key={machine.id}
+              position={[machine.latitude as number, machine.longitude as number]}
+              eventHandlers={{
+                click: () => setSelectedMachine(machine.id)
+              }}
+            >
               <Popup>
-                <strong>{m.name || m.id}</strong>
+                <strong>{machine.name || machine.id}</strong>
                 <br />
-                Lat: {m.latitude?.toFixed(4)}
-                <br />
-                Lon: {m.longitude?.toFixed(4)}
+                {machine.status}
               </Popup>
             </Marker>
           ))}
-      </MapContainer>
-    </div>
+      </MarkerClusterGroup>
+      {machineHistory.length > 0 && <Polyline positions={machineHistory} color="green" />}
+    </MapContainer>
   );
 };
 
