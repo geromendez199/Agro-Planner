@@ -1,52 +1,47 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { Card, CardContent, CircularProgress, List, ListItem, ListItemText, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
-interface Machine {
-  id: string;
-  name?: string;
-  category?: string;
-  serial_number?: string;
-  status?: string;
-  latitude?: number;
-  longitude?: number;
-}
+import { useMachines } from '../context/MachineContext';
+import Alert from './Alert';
 
 const MachineList: React.FC = () => {
-  const [machines, setMachines] = useState<Machine[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
+  const { machines, loading, error, refresh } = useMachines();
+  const { t } = useTranslation();
 
-  useEffect(() => {
-    async function fetchMachines() {
-      try {
-        const response = await axios.get<Machine[]>('/api/machines');
-        setMachines(response.data);
-      } catch (err) {
-        setError('No se pudo obtener la lista de máquinas');
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchMachines();
-  }, []);
-
-  if (loading) return <p>Cargando máquinas…</p>;
-  if (error) return <p>{error}</p>;
+  if (loading) {
+    return (
+      <Card>
+        <CardContent sx={{ display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div>
-      <h2>Maquinaria</h2>
-      {machines.length === 0 && <p>No hay máquinas registradas.</p>}
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {machines.map((m) => (
-          <li key={m.id} style={{ marginBottom: '0.5rem', borderBottom: '1px solid #ccc', paddingBottom: '0.5rem' }}>
-            <strong>{m.name || m.id}</strong>
-            {m.category && <span> • {m.category}</span>}
-            {m.status && <span> • {m.status}</span>}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Card>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>
+          {t('dashboard.machines')}
+        </Typography>
+        <Alert message={error} onRetry={refresh} />
+        {machines.length === 0 && !error ? (
+          <Typography variant="body2">{t('dashboard.noMachines')}</Typography>
+        ) : (
+          <List>
+            {machines.map((machine) => (
+              <ListItem key={machine.id} divider>
+                <ListItemText
+                  primary={machine.name || machine.id}
+                  secondary={`${machine.category ?? ''} ${machine.status ? `· ${machine.status}` : ''}`.trim()}
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

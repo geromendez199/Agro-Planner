@@ -26,6 +26,7 @@ class Settings(BaseSettings):
         secret_key: Clave secreta para firmar JWT (si se usa autenticación local).
         algorithm: Algoritmo de firma JWT.
         access_token_expire_minutes: Tiempo de expiración del token JWT.
+        jd_fake_token: Token estático de pruebas para desarrollo.
     """
 
     client_id: str = Field(..., env="CLIENT_ID")
@@ -39,6 +40,7 @@ class Settings(BaseSettings):
     secret_key: str = Field("", env="SECRET_KEY")
     algorithm: str = Field("HS256", env="ALGORITHM")
     access_token_expire_minutes: int = Field(60, env="ACCESS_TOKEN_EXPIRE_MINUTES")
+    jd_fake_token: str | None = Field(None, env="JD_FAKE_TOKEN")
 
     class Config:
         env_file = ".env"

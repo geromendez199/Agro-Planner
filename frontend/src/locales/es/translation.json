@@ -1,0 +1,33 @@
+{
+  "dashboard": {
+    "title": "Agro Planner",
+    "machines": "Máquinas",
+    "fields": "Campos",
+    "activeWork": "Trabajos en curso",
+    "newPlan": "Nuevo plan de trabajo",
+    "noMachines": "No hay máquinas disponibles",
+    "noWork": "No hay planes activos",
+    "retry": "Reintentar",
+    "status": "Estado",
+    "progress": "Progreso",
+    "start": "Inicio",
+    "end": "Fin"
+  },
+  "workPlan": {
+    "field": "Campo",
+    "type": "Tipo",
+    "startDate": "Fecha de inicio",
+    "endDate": "Fecha de fin",
+    "status": "Estado",
+    "create": "Crear plan",
+    "required": "Todos los campos son obligatorios",
+    "success": "Plan creado correctamente"
+  },
+  "alerts": {
+    "error": "Ocurrió un error inesperado"
+  },
+  "scheduler": {
+    "running": "Planificador en ejecución",
+    "stopped": "Planificador detenido"
+  }
+}
