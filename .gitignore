@@ -14,6 +14,7 @@ node_modules/
 # Archivos de compilación
 dist/
 build/
+/docs/
 *.log
 *.sqlite3
 

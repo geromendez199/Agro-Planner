@@ -147,6 +147,18 @@ curl http://localhost:8000/metrics
 3. Carga las variables sensibles como *Environment Properties* y monta un volumen `logs/` usando el archivo `.ebextensions` si quieres persistir registros.
 4. Para el frontend puedes usar S3 + CloudFront subiendo el build generado por `npm run build` o desplegar el contenedor de Vite en un segundo entorno EB.
 
+### GitHub Pages
+1. Ejecuta el script de release desde la carpeta `frontend` para generar artefactos estáticos listos para Pages:
+   ```bash
+   cd frontend
+   npm install
+   npm run build:pages
+   ```
+   El comando crea la carpeta `docs/` en la raíz con la aplicación empaquetada y un `base` configurado para `/Agro-Planner/`.
+2. Haz commit del contenido de `docs/` o deja que el workflow `Deploy frontend to GitHub Pages` lo publique automáticamente.
+3. En la configuración del repositorio habilita GitHub Pages apuntando a la rama `gh-pages` (generada por el workflow) o a la carpeta `/docs` en `main` si prefieres despliegue manual.
+4. Tras el primer despliegue, GitHub publicará la aplicación en `https://<tu_usuario>.github.io/Agro-Planner/`.
+
 ## Métricas y observabilidad
 
 - `prometheus-fastapi-instrumentator` expone métricas en `/metrics` listas para Prometheus o Grafana.
